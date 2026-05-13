@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מרוץ חשבון</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Rubik', sans-serif;
+    background: #0a0a1a;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Animated road */
+  .road {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 120px;
+    background: #1a1a2e;
+    border-top: 4px solid #333;
+    overflow: hidden;
+  }
+  .road-line {
+    position: absolute;
+    top: 50%; left: -200px;
+    width: 80px; height: 8px;
+    background: #FFD700;
+    border-radius: 4px;
+    animation: roadMove 1.5s linear infinite;
+  }
+  .road-line:nth-child(2) { animation-delay: -0.5s; left: calc(-200px + 33%); }
+  .road-line:nth-child(3) { animation-delay: -1s; left: calc(-200px + 66%); }
+
+  @keyframes roadMove {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(100vw + 280px)); }
+  }
+
+  /* Stars */
+  .stars { position: fixed; inset: 0; pointer-events: none; }
+  .star {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle 3s infinite;
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  .hero {
+    text-align: center;
+    z-index: 10;
+    padding-bottom: 140px;
+  }
+
+  .title {
+    font-size: clamp(3rem, 10vw, 7rem);
+    font-weight: 900;
+    line-height: 1;
+    background: linear-gradient(135deg, #FFD700, #FF6B6B, #4ECDC4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    margin-bottom: 0.2em;
+    animation: titlePulse 3s ease-in-out infinite;
+  }
+
+  @keyframes titlePulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.2); }
+  }
+
+  .emoji-race {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    animation: bounce 1s ease-in-out infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .subtitle {
+    font-size: 1.2rem;
+    color: #aaa;
+    margin-bottom: 3rem;
+    font-weight: 400;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    font-family: 'Rubik', sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    border: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+  .btn:active { transform: translateY(0); }
+
+  .btn-teacher {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+  }
+  .btn-student {
+    background: linear-gradient(135deg, #FFD700, #FF6B6B);
+    color: #0a0a1a;
+  }
+
+  .cars-row {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    animation: slideIn 20s linear infinite;
+    white-space: nowrap;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(100vw); }
+    to { transform: translateX(-100vw); }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="road">
+  <div class="road-line"></div>
+  <div class="road-line"></div>
+  <div class="road-line"></div>
+</div>
+
+<div class="hero">
+  <div class="cars-row">🏎️ 🚗 🚕 🚙 🛻 🚓</div>
+  <h1 class="title">מרוץ חשבון</h1>
+  <p class="subtitle">תחרות חשבון בזמן אמת • עד 8 שחקנים • מי ינצח?</p>
+  <div class="buttons">
+    <a href="/teacher" class="btn btn-teacher">👨‍🏫 כניסה למורה</a>
+    <a href="/student" class="btn btn-student">🎮 כניסה לתלמיד</a>
+  </div>
+</div>
+
+<script>
+  // Generate stars
+  const stars = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 70 + '%';
+    s.style.animationDelay = Math.random() * 3 + 's';
+    s.style.width = s.style.height = (Math.random() * 3 + 1) + 'px';
+    stars.appendChild(s);
+  }
+</script>
+</body>
+</html>

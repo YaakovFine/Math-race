@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ממשק מורה - מרוץ חשבון</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Rubik', sans-serif;
+    background: #0f0f23;
+    color: #fff;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  .header h1 { font-size: 2.5rem; font-weight: 900; color: #FFD700; }
+  .header p { color: #888; margin-top: 0.3rem; }
+
+  .card {
+    background: #1a1a35;
+    border: 1px solid #2a2a50;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 700px;
+    margin: 0 auto 2rem;
+  }
+
+  .card h2 { font-size: 1.3rem; color: #aaa; margin-bottom: 1.5rem; font-weight: 600; }
+
+  .btn {
+    display: inline-block;
+    padding: 0.9rem 2rem;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: 'Rubik', sans-serif;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.15s, opacity 0.15s;
+    text-align: center;
+  }
+  .btn:hover { transform: translateY(-2px); opacity: 0.9; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+  .btn-green { background: linear-gradient(135deg, #11998e, #38ef7d); color: #0a0a1a; }
+  .btn-red { background: linear-gradient(135deg, #FF6B6B, #ee0979); color: #fff; }
+  .btn-gold { background: linear-gradient(135deg, #FFD700, #ffa500); color: #0a0a1a; }
+
+  .code-display {
+    text-align: center;
+    padding: 2rem;
+    background: #0a0a1a;
+    border-radius: 12px;
+    margin: 1.5rem 0;
+  }
+  .code-display .label { font-size: 0.9rem; color: #888; margin-bottom: 0.5rem; }
+  .code-display .code {
+    font-size: 4rem;
+    font-weight: 900;
+    letter-spacing: 0.3em;
+    color: #FFD700;
+    text-shadow: 0 0 30px rgba(255,215,0,0.5);
+  }
+  .code-display .hint { font-size: 0.85rem; color: #666; margin-top: 0.5rem; }
+
+  .players-list {
+    display: grid;
+    gap: 0.8rem;
+    margin-top: 1rem;
+  }
+
+  .player-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #0a0a1a;
+    border-radius: 10px;
+    padding: 0.8rem 1.2rem;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .player-vehicle { font-size: 1.5rem; }
+  .player-name { font-weight: 600; font-size: 1.1rem; flex: 1; }
+  .player-ready { font-size: 0.8rem; color: #38ef7d; }
+
+  .count-badge {
+    display: inline-block;
+    background: #2a2a50;
+    border-radius: 20px;
+    padding: 0.3rem 1rem;
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-bottom: 1rem;
+  }
+
+  .actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }
+
+  #step-create { display: block; }
+  #step-lobby { display: none; }
+
+  .open-dashboard-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #1a1a35;
+    border: 2px dashed #444;
+    border-radius: 10px;
+    color: #888;
+    cursor: pointer;
+    font-size: 1rem;
+    font-family: 'Rubik', sans-serif;
+    transition: border-color 0.2s, color 0.2s;
+    text-decoration: none;
+  }
+  .open-dashboard-btn:hover { border-color: #FFD700; color: #FFD700; }
+
+  .status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #38ef7d;
+    animation: pulse 2s infinite;
+    display: inline-block;
+    margin-left: 0.5rem;
+  }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>👨‍🏫 ממשק מורה</h1>
+  <p>נהל את המרוץ מכאן</p>
+</div>
+
+<!-- Step 1: Create race -->
+<div class="card" id="step-create">
+  <h2>יצירת מרוץ חדש</h2>
+  <p style="color:#888; margin-bottom:1.5rem;">לחץ על הכפתור כדי לפתוח חדר מרוץ. תקבל קוד שהתלמידים ישתמשו בו כדי להצטרף.</p>
+  <button class="btn btn-primary" onclick="createRace()">🏁 צור מרוץ חדש</button>
+</div>
+
+<!-- Step 2: Lobby -->
+<div class="card" id="step-lobby">
+  <h2>לובי <span class="status-dot"></span></h2>
+
+  <div class="code-display">
+    <div class="label">קוד החדר לשיתוף עם התלמידים:</div>
+    <div class="code" id="race-code">-----</div>
+    <div class="hint">תלמידים נכנסים ל: <strong>localhost:3000/student</strong></div>
+  </div>
+
+  <div class="count-badge" id="player-count">0 / 8 שחקנים</div>
+
+  <div class="players-list" id="players-list">
+    <p style="color:#555; text-align:center; padding:1rem;">ממתין לשחקנים...</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-green" id="start-btn" onclick="startRace()" disabled>
+      🚦 התחל מרוץ
+    </button>
+    <button class="btn btn-red" id="end-btn" onclick="endRace()" style="display:none;">
+      🛑 סיים מרוץ
+    </button>
+  </div>
+
+  <a href="#" class="open-dashboard-btn" id="dashboard-link" target="_blank">
+    📺 פתח דשבורד מרוץ בטאב חדש (להקרין על המסך)
+  </a>
+</div>
+
+<script>
+let raceCode = null;
+let eventSource = null;
+
+async function createRace() {
+  const res = await fetch('/api/race/create', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+  const data = await res.json();
+  raceCode = data.code;
+
+  document.getElementById('race-code').textContent = raceCode;
+  document.getElementById('step-create').style.display = 'none';
+  document.getElementById('step-lobby').style.display = 'block';
+  document.getElementById('dashboard-link').href = `/dashboard?code=${raceCode}`;
+
+  connectSSE();
+}
+
+function connectSSE() {
+  eventSource = new EventSource(`/api/race/${raceCode}/events`);
+
+  eventSource.addEventListener('init', e => {
+    const data = JSON.parse(e.data);
+    updatePlayers(data.players);
+  });
+
+  eventSource.addEventListener('playerJoined', e => {
+    const data = JSON.parse(e.data);
+    updatePlayers(data.players);
+    document.getElementById('player-count').textContent = `${data.count} / 8 שחקנים`;
+    document.getElementById('start-btn').disabled = data.count < 1;
+  });
+
+  eventSource.addEventListener('raceStarted', e => {
+    document.getElementById('start-btn').disabled = true;
+    document.getElementById('start-btn').textContent = '🏎️ המרוץ מתנהל...';
+  });
+
+  eventSource.addEventListener('raceFinished', e => {
+    const data = JSON.parse(e.data);
+    alert(`🏆 המרוץ הסתיים!\n\nמנצח: ${data.winner}`);
+  });
+}
+
+function updatePlayers(players) {
+  const list = document.getElementById('players-list');
+  if (!players.length) {
+    list.innerHTML = '<p style="color:#555; text-align:center; padding:1rem;">ממתין לשחקנים...</p>';
+    return;
+  }
+  list.innerHTML = players.map(p => `
+    <div class="player-row">
+      <span class="player-vehicle">${p.vehicle}</span>
+      <span class="player-name" style="color:${p.color}">${p.name}</span>
+      <span class="player-ready">✓ מחובר</span>
+    </div>
+  `).join('');
+  document.getElementById('player-count').textContent = `${players.length} / 8 שחקנים`;
+  document.getElementById('start-btn').disabled = players.length < 1;
+}
+
+async function startRace() {
+  if (!raceCode) return;
+  await fetch(`/api/race/${raceCode}/start`, { method: 'POST' });
+  document.getElementById('start-btn').disabled = true;
+  document.getElementById('start-btn').textContent = '🏎️ המרוץ מתנהל...';
+}
+
+async function endRace() {
+  if (!raceCode) return;
+  if (!confirm('לסיים את המרוץ עכשיו?')) return;
+  await fetch(`/api/race/${raceCode}/end`, { method: 'POST' });
+  document.getElementById('end-btn').style.display = 'none';
+}
+</script>
+</body>
+</html>

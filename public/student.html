@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מרוץ חשבון - תלמיד</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Rubik', sans-serif;
+    background: #0f0f23;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .screen { width: 100%; max-width: 500px; animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
+
+  h1 { font-size: 2rem; font-weight: 900; color: #FFD700; margin-bottom: 0.3rem; text-align:center; }
+  .sub { color: #888; text-align: center; margin-bottom: 2rem; }
+
+  .card {
+    background: #1a1a35;
+    border: 1px solid #2a2a50;
+    border-radius: 16px;
+    padding: 2rem;
+  }
+
+  label { display: block; margin-bottom: 0.5rem; color: #aaa; font-size: 0.9rem; }
+
+  input {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    background: #0a0a1a;
+    border: 2px solid #2a2a50;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-family: 'Rubik', sans-serif;
+    margin-bottom: 1rem;
+    text-align: center;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  input:focus { border-color: #667eea; }
+  input.code-input { font-size: 1.8rem; font-weight: 900; letter-spacing: 0.3em; color: #FFD700; text-transform: uppercase; }
+
+  .btn {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: 'Rubik', sans-serif;
+    cursor: pointer;
+    border: none;
+    background: linear-gradient(135deg, #FFD700, #ffa500);
+    color: #0a0a1a;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .error { color: #FF6B6B; text-align: center; font-size: 0.9rem; margin-top: 0.5rem; display:none; }
+
+  /* Waiting screen */
+  .waiting-vehicle { font-size: 5rem; text-align:center; animation: bounce 1s ease-in-out infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-15px)} }
+  .waiting-name { font-size: 1.3rem; font-weight: 700; text-align: center; margin: 1rem 0 0.3rem; }
+  .waiting-sub { color: #888; text-align: center; margin-bottom: 2rem; }
+  .pulse-text { animation: textPulse 2s ease-in-out infinite; }
+  @keyframes textPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* Game screen */
+  #screen-game { display: none; }
+
+  .position-bar {
+    background: #0a0a1a;
+    border-radius: 50px;
+    height: 20px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #2a2a50;
+  }
+  .position-fill {
+    height: 100%;
+    border-radius: 50px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    width: 0%;
+  }
+  .position-vehicle {
+    position: absolute;
+    top: 50%; right: 0;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    transition: right 0.8s;
+  }
+
+  .position-label {
+    display: flex;
+    justify-content: space-between;
+    color: #888;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .question-box {
+    background: #0a0a1a;
+    border: 2px solid #2a2a50;
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .question-text {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    line-height: 1.3;
+    direction: ltr;
+  }
+
+  .timer-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: #1a1a35;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+  .timer-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #38ef7d, #FFD700);
+    transition: width 1s linear, background 1s;
+  }
+  .timer-text { color: #888; font-size: 0.85rem; margin-bottom: 1rem; }
+
+  .answer-input {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    border-color: #667eea !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .feedback {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    padding: 0.8rem;
+    border-radius: 10px;
+    display: none;
+  }
+  .feedback.correct { background: rgba(56,239,125,0.15); color: #38ef7d; }
+  .feedback.wrong { background: rgba(255,107,107,0.15); color: #FF6B6B; }
+
+  /* Decision event */
+  #screen-decision {
+    display: none;
+    text-align: center;
+  }
+  .decision-title { font-size: 1.8rem; font-weight: 900; color: #FFD700; margin-bottom: 0.5rem; }
+  .decision-sub { color: #888; margin-bottom: 2rem; }
+  .decision-options { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .decision-btn {
+    padding: 1.5rem 1rem;
+    border-radius: 16px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-family: 'Rubik', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: transform 0.15s, border-color 0.15s;
+    text-align: center;
+  }
+  .decision-btn:hover { transform: translateY(-3px); }
+  .decision-btn.highway { background: linear-gradient(135deg, #1a1a35, #2a2a60); border-color: #FFD700; color: #FFD700; }
+  .decision-btn.dirt { background: linear-gradient(135deg, #1a1a35, #2a3020); border-color: #38ef7d; color: #38ef7d; }
+  .decision-btn .icon { font-size: 2.5rem; display:block; margin-bottom: 0.5rem; }
+  .decision-btn .desc { font-size: 0.8rem; color: #888; font-weight: 400; margin-top: 0.3rem; }
+
+  /* Luck event popup */
+  .luck-popup {
+    position: fixed;
+    top: 20px; left: 50%; transform: translateX(-50%);
+    background: #1a1a35;
+    border: 2px solid #FFD700;
+    border-radius: 16px;
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    z-index: 100;
+    animation: popIn 0.3s ease, popOut 0.3s ease 2.7s forwards;
+    white-space: nowrap;
+  }
+  @keyframes popIn { from{opacity:0;transform:translateX(-50%) scale(0.8)} to{opacity:1;transform:translateX(-50%) scale(1)} }
+  @keyframes popOut { to{opacity:0;transform:translateX(-50%) translateY(-20px)} }
+
+  /* Finish screen */
+  #screen-finish { display: none; text-align: center; }
+  .trophy { font-size: 5rem; animation: spin 1s ease; }
+  @keyframes spin { from{transform:rotate(-30deg) scale(0)} to{transform:rotate(0) scale(1)} }
+</style>
+</head>
+<body>
+
+<!-- JOIN SCREEN -->
+<div class="screen" id="screen-join">
+  <h1>🏎️ מרוץ חשבון</h1>
+  <p class="sub">הכנס את הפרטים שלך</p>
+  <div class="card">
+    <label>שמך</label>
+    <input type="text" id="input-name" placeholder="השם שלי..." maxlength="20">
+    <label>קוד חדר</label>
+    <input type="text" id="input-code" class="code-input" placeholder="XXXXX" maxlength="5">
+    <button class="btn" onclick="joinRace()">הצטרף למרוץ 🚦</button>
+    <div class="error" id="join-error"></div>
+  </div>
+</div>
+
+<!-- WAITING SCREEN -->
+<div class="screen" id="screen-waiting" style="display:none;">
+  <div class="card" style="text-align:center;">
+    <div class="waiting-vehicle" id="my-vehicle">🏎️</div>
+    <div class="waiting-name" id="waiting-name"></div>
+    <div class="waiting-sub">נרשמת בהצלחה!</div>
+    <p class="pulse-text" style="color:#888;">ממתין שהמורה יתחיל את המרוץ...</p>
+    <div id="other-players" style="margin-top:1.5rem;"></div>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="screen" id="screen-game">
+  <div style="margin-bottom:1rem;">
+    <div class="position-label">
+      <span id="pos-label">📍 מיקום שלי</span>
+      <span id="pos-num">0 / 1000</span>
+    </div>
+    <div class="position-bar">
+      <div class="position-fill" id="pos-fill"></div>
+    </div>
+  </div>
+
+  <div class="question-box" id="question-box">
+    <div class="question-text" id="question-text">🚦 מתכוננים...</div>
+    <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+    <div class="timer-text">⏱ <span id="timer-num">15</span> שניות</div>
+    <input type="number" class="answer-input" id="answer-input" placeholder="הכנס תשובה..." inputmode="numeric" style="display:none;">
+    <button class="btn" id="submit-btn" style="display:none;" onclick="submitAnswer()">שלח תשובה ✓</button>
+    <div class="feedback" id="feedback"></div>
+  </div>
+</div>
+
+<!-- DECISION SCREEN -->
+<div class="screen" id="screen-decision">
+  <div class="card">
+    <div class="decision-title">🚧 צומת!</div>
+    <div class="decision-sub">בחר את המסלול שלך</div>
+    <div class="decision-options">
+      <button class="decision-btn highway" onclick="chooseDecision('highway')">
+        <span class="icon">🛣️</span>
+        אוטוסטרדה
+        <div class="desc">שאלה קשה אחת<br>נכון = קפיצה ענקית<br>טעות = עונש</div>
+      </button>
+      <button class="decision-btn dirt" onclick="chooseDecision('dirt')">
+        <span class="icon">🌿</span>
+        דרך עפר
+        <div class="desc">4 שאלות קלות<br>התקדמות בטוחה<br>ללא סיכון</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- FINISH SCREEN -->
+<div class="screen" id="screen-finish">
+  <div class="card">
+    <div class="trophy" id="finish-trophy">🏆</div>
+    <h2 id="finish-title" style="font-size:2rem; margin:1rem 0 0.5rem; color:#FFD700;">המרוץ הסתיים!</h2>
+    <p id="finish-sub" style="color:#888;"></p>
+    <div id="finish-standings" style="margin-top:1.5rem;"></div>
+  </div>
+</div>
+
+<script>
+let myPlayerId = null;
+let myRaceCode = null;
+let myPosition = 0;
+let eventSource = null;
+let timerInterval = null;
+let timerLeft = 15;
+let currentAnswer = null;
+let isHighwayQuestion = false;
+
+const $ = id => document.getElementById(id);
+
+async function joinRace() {
+  const name = $('input-name').value.trim();
+  const code = $('input-code').value.trim().toUpperCase();
+  if (!name) { showError('נא להכניס שם'); return; }
+  if (code.length < 3) { showError('נא להכניס קוד חדר'); return; }
+
+  const res = await fetch('/api/race/join', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, code })
+  });
+  const data = await res.json();
+
+  if (!res.ok) { showError(data.error); return; }
+
+  myPlayerId = data.playerId;
+  myRaceCode = code;
+
+  $('screen-join').style.display = 'none';
+  $('screen-waiting').style.display = 'flex';
+  $('my-vehicle').textContent = data.vehicle;
+  $('waiting-name').textContent = name;
+
+  connectSSE();
+}
+
+function showError(msg) {
+  const el = $('join-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function connectSSE() {
+  eventSource = new EventSource(`/api/race/${myRaceCode}/events`);
+
+  eventSource.addEventListener('init', e => {
+    const data = JSON.parse(e.data);
+    updateOtherPlayers(data.players);
+    if (data.status === 'running') startGame();
+  });
+
+  eventSource.addEventListener('playerJoined', e => {
+    const data = JSON.parse(e.data);
+    updateOtherPlayers(data.players);
+  });
+
+  eventSource.addEventListener('raceStarted', e => {
+    startGame();
+  });
+
+  eventSource.addEventListener('question', e => {
+    const data = JSON.parse(e.data);
+    if (data.playerId === myPlayerId) {
+      isHighwayQuestion = false;
+      showQuestion(data.question, data.timeLimit || 15);
+    }
+  });
+
+  eventSource.addEventListener('highwayQuestion', e => {
+    const data = JSON.parse(e.data);
+    if (data.playerId === myPlayerId) {
+      isHighwayQuestion = true;
+      showQuestion(data.question, data.timeLimit || 20);
+      $('screen-decision').style.display = 'none';
+      $('screen-game').style.display = 'block';
+    }
+  });
+
+  eventSource.addEventListener('decisionEvent', e => {
+    const data = JSON.parse(e.data);
+    if (data.playerId === myPlayerId) {
+      clearTimer();
+      $('screen-game').style.display = 'none';
+      $('screen-decision').style.display = 'block';
+    }
+  });
+
+  eventSource.addEventListener('luckEvent', e => {
+    const data = JSON.parse(e.data);
+    if (data.playerId === myPlayerId) {
+      showLuckPopup(data.event.label);
+      updatePosition(data.position);
+    }
+  });
+
+  eventSource.addEventListener('positionUpdate', e => {
+    const data = JSON.parse(e.data);
+    if (data.playerId === myPlayerId) {
+      updatePosition(data.position);
+    }
+  });
+
+  eventSource.addEventListener('highwayResult', e => {
+    const data = JSON.parse(e.data);
+    if (data.playerId === myPlayerId) {
+      updatePosition(data.position);
+    }
+  });
+
+  eventSource.addEventListener('raceFinished', e => {
+    const data = JSON.parse(e.data);
+    clearTimer();
+    showFinish(data);
+  });
+}
+
+function startGame() {
+  $('screen-waiting').style.display = 'none';
+  $('screen-game').style.display = 'block';
+}
+
+function updateOtherPlayers(players) {
+  const el = $('other-players');
+  const others = players.filter(p => p.id !== myPlayerId);
+  if (!others.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<p style="color:#555;font-size:0.85rem;margin-bottom:0.5rem;">שחקנים בחדר:</p>' +
+    others.map(p => `<span style="margin:0.2rem 0.5rem;display:inline-block">${p.vehicle} <span style="color:${p.color}">${p.name}</span></span>`).join('');
+}
+
+function showQuestion(q, timeLimit) {
+  $('screen-game').style.display = 'block';
+  $('question-text').textContent = q.text;
+  $('answer-input').value = '';
+  $('answer-input').style.display = 'block';
+  $('submit-btn').style.display = 'block';
+  $('feedback').style.display = 'none';
+  $('answer-input').focus();
+  currentAnswer = q.answer;
+  startTimer(timeLimit);
+}
+
+function startTimer(seconds) {
+  clearTimer();
+  timerLeft = seconds;
+  updateTimerUI();
+  timerInterval = setInterval(() => {
+    timerLeft--;
+    updateTimerUI();
+    if (timerLeft <= 0) {
+      clearTimer();
+      handleTimeout();
+    }
+  }, 1000);
+}
+
+function clearTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+function updateTimerUI() {
+  const pct = (timerLeft / 15) * 100;
+  $('timer-fill').style.width = pct + '%';
+  $('timer-num').textContent = timerLeft;
+  if (timerLeft <= 5) {
+    $('timer-fill').style.background = 'linear-gradient(90deg, #FF6B6B, #ee0979)';
+  } else {
+    $('timer-fill').style.background = 'linear-gradient(90deg, #38ef7d, #FFD700)';
+  }
+}
+
+async function submitAnswer() {
+  const answer = $('answer-input').value.trim();
+  if (!answer) return;
+  clearTimer();
+
+  const endpoint = isHighwayQuestion ? 'highway-answer' : 'answer';
+  const res = await fetch(`/api/race/${myRaceCode}/${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ playerId: myPlayerId, answer })
+  });
+  const data = await res.json();
+
+  showFeedback(data.correct, data.correctAnswer, data.progress);
+
+  if (data.decision) {
+    setTimeout(() => {
+      $('screen-game').style.display = 'none';
+      $('screen-decision').style.display = 'block';
+    }, 900);
+  }
+}
+
+function showFeedback(correct, correctAnswer, progress) {
+  const fb = $('feedback');
+  $('answer-input').style.display = 'none';
+  $('submit-btn').style.display = 'none';
+  fb.style.display = 'block';
+
+  if (correct) {
+    fb.textContent = `✅ נכון! +${progress || ''} נקודות`;
+    fb.className = 'feedback correct';
+  } else {
+    fb.textContent = `❌ טעות. התשובה הנכונה: ${correctAnswer}`;
+    fb.className = 'feedback wrong';
+  }
+}
+
+async function handleTimeout() {
+  await fetch(`/api/race/${myRaceCode}/timeout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ playerId: myPlayerId })
+  });
+  showFeedback(false, '⏱ נגמר הזמן!', null);
+}
+
+async function chooseDecision(choice) {
+  $('screen-decision').style.display = 'none';
+  $('screen-game').style.display = 'block';
+  isHighwayQuestion = false;
+
+  await fetch(`/api/race/${myRaceCode}/decision`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ playerId: myPlayerId, choice })
+  });
+
+  if (choice === 'highway') {
+    $('question-text').textContent = '🛣️ מכינים שאלת אוטוסטרדה...';
+    isHighwayQuestion = true;
+  }
+}
+
+function updatePosition(pos) {
+  myPosition = pos;
+  const pct = Math.min(100, (pos / 1000) * 100);
+  $('pos-fill').style.width = pct + '%';
+  $('pos-num').textContent = `${pos} / 1000`;
+}
+
+function showLuckPopup(label) {
+  const el = document.createElement('div');
+  el.className = 'luck-popup';
+  el.textContent = label;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+function showFinish(data) {
+  $('screen-game').style.display = 'none';
+  $('screen-decision').style.display = 'none';
+  $('screen-finish').style.display = 'block';
+
+  const isWinner = data.winnerId === myPlayerId;
+  $('finish-trophy').textContent = isWinner ? '🏆' : '🏁';
+  $('finish-title').textContent = isWinner ? 'ניצחת! 🎉' : `המנצח: ${data.winner}`;
+  $('finish-sub').textContent = isWinner ? 'כל הכבוד! הגעת ראשון!' : 'מרוץ טוב - נסה שוב בפעם הבאה!';
+
+  if (data.finalStandings) {
+    $('finish-standings').innerHTML = '<p style="color:#666;margin-bottom:0.8rem;font-size:0.9rem;">דירוג סופי:</p>' +
+      data.finalStandings.map(p => `
+        <div style="display:flex;align-items:center;gap:1rem;padding:0.6rem;background:#0a0a1a;border-radius:8px;margin-bottom:0.5rem;">
+          <span style="font-size:1.2rem;font-weight:900;color:#FFD700;">${p.rank}</span>
+          <span>${p.vehicle}</span>
+          <span style="flex:1">${p.name}</span>
+          <span style="color:#888;font-size:0.85rem">${p.position}/1000</span>
+        </div>
+      `).join('');
+  }
+}
+
+// Enter key submits
+document.addEventListener('keypress', e => {
+  if (e.key === 'Enter') {
+    if ($('screen-join').style.display !== 'none') joinRace();
+    else if ($('screen-game').style.display !== 'none') submitAnswer();
+  }
+});
+</script>
+</body>
+</html>
