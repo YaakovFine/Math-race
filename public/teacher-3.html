@@ -177,7 +177,11 @@
     <button class="btn btn-red" id="end-btn" onclick="endRace()" style="display:none;">
       🛑 סיים מרוץ
     </button>
+    <button class="btn btn-primary" id="new-race-btn" onclick="newRace()" style="display:none;">
+      🔄 מרוץ חדש
+    </button>
   </div>
+  <div id="winner-banner" style="display:none; margin-top:1rem; text-align:center; font-size:1.5rem; font-weight:900; color:#FFD700; padding:1rem; background:#0a0a1a; border-radius:12px;"></div>
 
   <a href="#" class="open-dashboard-btn" id="dashboard-link" target="_blank">
     📺 פתח דשבורד מרוץ בטאב חדש (להקרין על המסך)
@@ -219,11 +223,16 @@ function connectSSE() {
   eventSource.addEventListener('raceStarted', e => {
     document.getElementById('start-btn').disabled = true;
     document.getElementById('start-btn').textContent = '🏎️ המרוץ מתנהל...';
+    document.getElementById('end-btn').style.display = 'inline-block';
   });
 
   eventSource.addEventListener('raceFinished', e => {
     const data = JSON.parse(e.data);
-    alert(`🏆 המרוץ הסתיים!\n\nמנצח: ${data.winner}`);
+    document.getElementById('end-btn').style.display = 'none';
+    document.getElementById('start-btn').textContent = '🏁 המרוץ הסתיים';
+    document.getElementById('new-race-btn').style.display = 'inline-block';
+    document.getElementById('winner-banner').textContent = '🏆 מנצח: ' + data.winner;
+    document.getElementById('winner-banner').style.display = 'block';
   });
 }
 
@@ -249,6 +258,19 @@ async function startRace() {
   await fetch(`/api/race/${raceCode}/start`, { method: 'POST' });
   document.getElementById('start-btn').disabled = true;
   document.getElementById('start-btn').textContent = '🏎️ המרוץ מתנהל...';
+}
+
+function newRace() {
+  if (eventSource) { eventSource.close(); eventSource = null; }
+  raceCode = null;
+  document.getElementById('step-lobby').style.display = 'none';
+  document.getElementById('step-create').style.display = 'block';
+  document.getElementById('players-list').innerHTML = '<p style="color:#555; text-align:center; padding:1rem;">ממתין לשחקנים...</p>';
+  document.getElementById('winner-banner').style.display = 'none';
+  document.getElementById('new-race-btn').style.display = 'none';
+  document.getElementById('end-btn').style.display = 'none';
+  document.getElementById('start-btn').disabled = true;
+  document.getElementById('start-btn').textContent = '🚦 התחל מרוץ';
 }
 
 async function endRace() {

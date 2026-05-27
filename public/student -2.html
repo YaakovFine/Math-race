@@ -287,6 +287,7 @@
     <h2 id="finish-title" style="font-size:2rem; margin:1rem 0 0.5rem; color:#FFD700;">המרוץ הסתיים!</h2>
     <p id="finish-sub" style="color:#888;"></p>
     <div id="finish-standings" style="margin-top:1.5rem;"></div>
+    <button class="btn" style="margin-top:1.5rem;" onclick="playAgain()">🔄 מרוץ חדש</button>
   </div>
 </div>
 
@@ -297,6 +298,7 @@ let myPosition = 0;
 let eventSource = null;
 let timerInterval = null;
 let timerLeft = 15;
+let timerTotal = 15;
 let currentAnswer = null;
 let isHighwayQuestion = false;
 
@@ -436,6 +438,7 @@ function showQuestion(q, timeLimit) {
 function startTimer(seconds) {
   clearTimer();
   timerLeft = seconds;
+  timerTotal = seconds;
   updateTimerUI();
   timerInterval = setInterval(() => {
     timerLeft--;
@@ -452,7 +455,7 @@ function clearTimer() {
 }
 
 function updateTimerUI() {
-  const pct = (timerLeft / 15) * 100;
+  const pct = (timerLeft / timerTotal) * 100;
   $('timer-fill').style.width = pct + '%';
   $('timer-num').textContent = timerLeft;
   if (timerLeft <= 5) {
@@ -562,6 +565,21 @@ function showFinish(data) {
         </div>
       `).join('');
   }
+}
+
+function playAgain() {
+  myPlayerId = null;
+  myRaceCode = null;
+  myPosition = 0;
+  if (eventSource) { eventSource.close(); eventSource = null; }
+  clearTimer();
+  ['screen-waiting','screen-game','screen-decision','screen-finish'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('screen-join').style.display = 'block';
+  document.getElementById('input-name').value = '';
+  document.getElementById('input-code').value = '';
+  document.getElementById('join-error').style.display = 'none';
 }
 
 // Enter key submits
